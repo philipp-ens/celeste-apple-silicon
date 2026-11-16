@@ -1,0 +1,26 @@
+505c505,510
+< 			return UTF8_ToManaged(INTERNAL_SDL_GetPlatform());
+---
+> 			/* Celeste arm64 port: FNA runs on SDL3 here, but Celeste.exe still
+> 			 * calls this SDL2 binding. Forward to SDL3 and keep the SDL2-era
+> 			 * platform name, which Celeste uses to pick its save folder.
+> 			 */
+> 			string platform = SDL3.SDL.SDL_GetPlatform();
+> 			return platform == "macOS" ? "Mac OS X" : platform;
+8825,8837c8830,8831
+< 			int utf8OrgBufSize = Utf8Size(org);
+< 			byte* utf8Org = stackalloc byte[utf8OrgBufSize];
+< 
+< 			int utf8AppBufSize = Utf8Size(app);
+< 			byte* utf8App = stackalloc byte[utf8AppBufSize];
+< 
+< 			return UTF8_ToManaged(
+< 				INTERNAL_SDL_GetPrefPath(
+< 					Utf8Encode(org, utf8Org, utf8OrgBufSize),
+< 					Utf8Encode(app, utf8App, utf8AppBufSize)
+< 				),
+< 				true
+< 			);
+---
+> 			/* Celeste arm64 port: forward to SDL3 (see SDL_GetPlatform). */
+> 			return SDL3.SDL.SDL_GetPrefPath(org, app);

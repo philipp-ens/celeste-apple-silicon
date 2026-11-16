@@ -1,0 +1,20 @@
+FMOD Engine runtime libraries
+=============================
+
+payload/MacOS/osx/libfmod.dylib and payload/MacOS/osx/libfmodstudio.dylib are
+the unmodified FMOD Engine 2.03.15 runtime libraries for macOS.
+
+    Made with FMOD Studio by Firelight Technologies Pty Ltd.
+
+FMOD is (c) Firelight Technologies Pty Ltd and is not open source. The
+libraries are included here for personal, non-commercial use only, so that
+Celeste (a game that already licenses FMOD) can run natively on Apple Silicon.
+Their use is governed by the FMOD End User Licence Agreement:
+
+    https://www.fmod.com/legal
+
+This converter is free, is not monetised, sponsored or used for promotion, and
+is not affiliated with or endorsed by Firelight Technologies. Do not sell it or
+bundle it with anything commercial. If Firelight Technologies asks for these
+libraries to be removed, remove them: the converter can be changed back to take
+them from the user's own FMOD Engine download.
