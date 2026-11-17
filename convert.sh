@@ -24,10 +24,25 @@ GAME_DIR=""
 UNDO=0
 FORCE=0
 WORK=""
+NEW=""
+BACKUP_DEST=""
 
 say() { printf '==> %s\n' "$*"; }
 die() { printf 'error: %s\n' "$*" >&2; exit 1; }
+
+#safety for interruptions during conversion
+rollback() {
+    [ -n "$NEW" ] && [ -d "$NEW" ] || return 0   # install finished (or never started)
+    if [ ! -d "$APP" ] && [ -n "$BACKUP_DEST" ] && [ -d "$BACKUP_DEST" ]; then
+        mv "$BACKUP_DEST" "$APP"
+    fi
+    if [ -d "$NEW/Contents/Resources/Content" ] && [ ! -e "$APP/Contents/Resources/Content" ]; then
+        mv "$NEW/Contents/Resources/Content" "$APP/Contents/Resources/Content"
+    fi
+}
+
 cleanup() {
+    rollback
     if [ -n "$WORK" ]; then rm -rf "$WORK"; fi
 }
 trap cleanup EXIT
@@ -84,7 +99,16 @@ latest_intel_backup() { ls -d "$KEEP"/Celeste.app.intel-* 2>/dev/null | tail -1 
 if [ "$UNDO" = "1" ]; then
     is_arm64 "$APP/Contents/MacOS/Celeste" || die "Celeste.app is already the Intel build"
     BACKUP="$(latest_intel_backup)"
+
+    #to ensure it works with backups made in 0.1.0
     [ -n "$BACKUP" ] || die "no saved Intel app in $KEEP (use Steam's 'Verify integrity of game files' instead)"
+
+    #0.1.1
+    if [ ! -d "$BACKUP/Contents/Resources/Content" ]; then
+        [ -d "$APP/Contents/Resources/Content" ] || die "game content is missing; use Steam's 'Verify integrity of game files'"
+        mv "$APP/Contents/Resources/Content" "$BACKUP/Contents/Resources/Content"
+    fi
+
     rm -rf "$APP"
     mv "$BACKUP" "$APP"
     say "Restored the original Intel Celeste.app"
@@ -128,7 +152,7 @@ fi
 
 say "Building the native app"
 NEW="$WORK/Celeste.app"
-cp -Rc "$APP" "$NEW" 2>/dev/null || cp -R "$APP" "$NEW"
+rsync -a --exclude '/Contents/Resources/Content' "$APP/" "$NEW/"
 C="$NEW/Contents"
 
 # Intel-only pieces: launcher with embedded Mono, native libraries, the old
@@ -152,7 +176,6 @@ for f in "$C/MacOS/Celeste" "$C"/MacOS/osx/*.dylib; do
 done
 
 xattr -dr com.apple.quarantine "$NEW" 2>/dev/null || true
-codesign -f --deep -s - "$NEW" >/dev/null 2>&1 || die "could not sign the converted app"
 
 # --- install -----------------------------------------------------------------
 
@@ -164,7 +187,12 @@ fi
 
 # Keep only the newest Intel app; Steam can always re-download it.
 for old in "$KEEP"/Celeste.app.intel-*; do [ -e "$old" ] && rm -rf "$old"; done
-mv "$APP" "$KEEP/Celeste.app.intel-$(date +%Y%m%d-%H%M%S)"
+
+mv "$APP/Contents/Resources/Content" "$C/Resources/Content"
+codesign -f --deep -s - "$NEW" >/dev/null 2>&1 || die "could not sign the converted app"
+BACKUP_DEST="$KEEP/Celeste.app.intel-$(date +%Y%m%d-%H%M%S)"
+mv "$APP" "$BACKUP_DEST"
+
 mv "$NEW" "$APP"
 
 say "Done. Celeste.app is now a native Apple Silicon app; start it from Steam as usual."
