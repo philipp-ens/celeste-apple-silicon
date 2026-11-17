@@ -58,6 +58,6 @@ Intel-only parts around it are replaced:
 
 A folder `arm64-converter-files` is created next to `Celeste.app`. It holds:
 
-- the original Intel `Celeste.app` (for `--undo`)
+- a stripped down copy of the original Intel Celeste.app for backup (--undo)
 - a one-time backup of your save folder
 - the Steam library, cached for re-conversion
